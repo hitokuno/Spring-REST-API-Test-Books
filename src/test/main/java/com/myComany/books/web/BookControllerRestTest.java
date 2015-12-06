@@ -1,11 +1,14 @@
 package com.myComany.books.web;
 
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,20 +24,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
-
 import com.myComany.books.domain.Book;
 import com.myComany.books.service.BookService;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import net.minidev.json.JSONArray;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "file:src/main/webapp/WEB-INF/spring/appServlet/servlet-context.xml" })
-public class BookControllerTest {
+public class BookControllerRestTest {
 	
-	private static final Logger logger = LoggerFactory.getLogger(BookControllerTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(BookControllerRestTest.class);
 	
 	private static final String baseUrl = "http://localhost:8080/Books/";
 	
@@ -60,29 +62,19 @@ public class BookControllerTest {
 	    entity = new HttpEntity<String>("parameters", headers);
 		// When
 		logger.info(url);
-		ResponseEntity<List> response = restTemplate.exchange(url, HttpMethod.GET, entity, List.class);
+		ResponseEntity<ArrayList> response = restTemplate.exchange(url, HttpMethod.GET, entity, ArrayList.class);
 		// Then
 		assertEquals("", HttpStatus.OK, response.getStatusCode());
-		
-		ObjectMapper mapper = new ObjectMapper();
-		String json = mapper.writeValueAsString(response.getBody());
-		
-		// Requires Book objects 
-		assertEquals("Book: Number of Books", 2, JsonPath.parse(json).read("$.length()", Book.class));
-		assertEquals("Book: Title of 1st book", "Spring First Look!", JsonPath.parse(json).read("$[0].title", Book.class));
-		assertEquals("Book: Title of 2nd book", "Maven in Action", JsonPath.parse(json).read("$[1].title", Book.class));
-		assertEquals("Book: 1st Author of 2nd book",  "not me....", JsonPath.parse(json).read("$[1].authors[0]", Book.class));
-		
-		// No specific object required
-		Object books = Configuration.defaultConfiguration().jsonProvider().parse(json);
+		ArrayList<Book> body = response.getBody();
+		assertEquals("Number of Books", 2, body.size());
+		assertEquals("Title of 1st book", "Spring First Look!", JsonPath.read(body, "$[0].title"));
+		assertEquals("Title of 2nd book", "Maven in Action", JsonPath.read(body, "$[1].title"));
+		assertEquals("1st Author of 2nd book",  "not me....", JsonPath.read(body, "$[1].authors[0]"));
+//		assertEquals("1st Author of 2nd book",  hasSize(1), JsonPath.read(body, "$[1].authors"));
 		JSONArray expect = new JSONArray();
 		expect.add("Spring First Look!");
 		expect.add("Maven in Action");
-		assertEquals("Titles", expect, JsonPath.read(books, "$..title"));
-		assertEquals("Number of Books", 2, JsonPath.read(books, "$.length()"));
-		assertEquals("Title of 1st book", "Spring First Look!", JsonPath.read(books, "$[0].title"));
-		assertEquals("Title of 2nd book", "Maven in Action", JsonPath.read(books, "$[1].title"));
-		assertEquals("1st Author of 2nd book",  "not me....", JsonPath.read(books, "$[1].authors[0]"));
+		assertEquals("Titles", expect, JsonPath.read(body, "$..title"));
 	}
 	
 

@@ -53,20 +53,14 @@ public class BookControllerMockTest {
 		// Then
 		mockMvc.perform(get(url))  // MockMvcRequestBuilders.get
 			.andExpect(status().isOk())  // MockMvcResultMatchers.status
-			.andExpect(content().contentType("application/json;charset=UTF-8"));
-			/*
-			 *  JsonPath 2.1.0 does not work. 
-				.andExpect(jsonPath("$").isArray())  // MockMvcResultMatchers.jsonPath
-				.andExpect(jsonPath("$", hasSize(2)))
-				.andExpect(jsonPath("$[0].title").value("Spring First Look!"))
-				.andExpect(jsonPath("$[1].title").value("Maven in Action"))
-				.andExpect(jsonPath("$[1].authors[0]").value("not me...."));
-			 */
+			.andExpect(content().contentType("application/json;charset=UTF-8"))
+			.andExpect(jsonPath("$").isArray())  // MockMvcResultMatchers.jsonPath
+			.andExpect(jsonPath("$", hasSize(2)))
+			.andExpect(jsonPath("$[0].title").value("Spring First Look!"))
+			.andExpect(jsonPath("$[1].title").value("Maven in Action"))
+			.andExpect(jsonPath("$[1].authors[0]").value("not me...."));
 	}
 	
-	/*
-	 */
-
 	/*
 	@RequestMapping(value="/API/books/{title}", method = RequestMethod.GET, 
 			produces = "application/json")

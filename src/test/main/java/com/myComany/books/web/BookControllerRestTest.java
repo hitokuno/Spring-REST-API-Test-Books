@@ -1,14 +1,9 @@
 package com.myComany.books.web;
 
-
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
-import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,12 +20,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.jayway.jsonpath.JsonPath;
-import com.myComany.books.domain.Book;
 import com.myComany.books.service.BookService;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import net.minidev.json.JSONArray;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "file:src/main/webapp/WEB-INF/spring/appServlet/servlet-context.xml" })
@@ -62,22 +52,42 @@ public class BookControllerRestTest {
 	    entity = new HttpEntity<String>("parameters", headers);
 		// When
 		logger.info(url);
+		@SuppressWarnings("rawtypes")
 		ResponseEntity<ArrayList> response = restTemplate.exchange(url, HttpMethod.GET, entity, ArrayList.class);
 		// Then
-		assertEquals("", HttpStatus.OK, response.getStatusCode());
-		ArrayList<Book> body = response.getBody();
-		assertEquals("Number of Books", 2, body.size());
-		assertEquals("Title of 1st book", "Spring First Look!", JsonPath.read(body, "$[0].title"));
-		assertEquals("Title of 2nd book", "Maven in Action", JsonPath.read(body, "$[1].title"));
-		assertEquals("1st Author of 2nd book",  "not me....", JsonPath.read(body, "$[1].authors[0]"));
-//		assertEquals("1st Author of 2nd book",  hasSize(1), JsonPath.read(body, "$[1].authors"));
-		JSONArray expect = new JSONArray();
-		expect.add("Spring First Look!");
-		expect.add("Maven in Action");
-		assertEquals("Titles", expect, JsonPath.read(body, "$..title"));
+		Assert.assertEquals("", HttpStatus.OK, response.getStatusCode());
+		@SuppressWarnings("rawtypes")
+		ArrayList body = response.getBody();
+		Assert.assertEquals("Number of Books", 2, body.size());
+		Assert.assertEquals("Title of 1st book", "Spring First Look!", JsonPath.read(body, "$[0].title"));
+		Assert.assertEquals("Title of 2nd book", "Maven in Action", JsonPath.read(body, "$[1].title"));
+		Assert.assertEquals("1st Author of 2nd book",  "not me....", JsonPath.read(body, "$[1].authors[0]"));
+		assertLength("Number of Books", body, "$", (long) 2);
+		assertLength("Number of Author", body, "$[1].authors", (long) 1);
+		/* length is not available in 0.8.1.
+		*  assertEquals("Number of Books", 2, JsonPath.read(body, "$.length()"));
+		* 
+		*  assertEquals("Number of Books",  hasSize(2), JsonPath.read(body, "$"));		
+		*  assertEquals("Number of Books",  Matchers.hasSize(2), JsonPath.read(body, "$"));
+		*  assertEquals("Number of Books",  Matchers.arrayWithSize(2), JsonPath.read(body, "$"));
+		*/
 	}
 	
-
+	/**
+	 * Assert legnth of JSON object specified by jsonPath from body.
+	 * @param message
+	 * @param body
+	 * @param jsonPath
+	 * @param index
+	 */
+	public void assertLength(
+			final String message, final Object body, 
+			final String jsonPath, final Long length
+			) {
+		ArrayList<Object> arrayList = JsonPath.read(body, jsonPath);
+		Assert.assertEquals(message, length, new Long(arrayList.size()));
+	}
+	
 	/*
 	@RequestMapping(value="/API/books/{title}", method = RequestMethod.GET, 
 			produces = "application/json")
